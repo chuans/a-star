@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!--  -->
+    <canvas id="canvas1" width="600" height="600" style="background: lightgray">
+      当前浏览器不支持canvas ·
+    </canvas>
+    
+    <script>
+    // 找到画布
+    var canvas1 = document.getElementById("canvas1");
+    if (!canvas1.getContext) {
+      console.log("当前浏览器不支持canvas");
+    }
+    // 获取画笔(这里是2d画笔)
+    var ctx = canvas1.getContext("2d");
+    
+    class Heart {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.color = "red";
+        //   绑定多个hover事件
+        this.eventMapList = {
+          hover: [],
+          leave: [],
+        };
+        
+        this.heartPath = new Path2D();
+        this.heartPath.moveTo(this.x, this.y);
+        this.heartPath.bezierCurveTo(
+          this.x + 80,
+          this.y - 100,
+          this.x + 130,
+          this.y + 30,
+          this.x,
+          this.y + 100
+        );
+        
+        this.heartPath.bezierCurveTo(
+          this.x - 130,
+          this.y + 30,
+          this.x - 80,
+          this.y - 100,
+          this.x,
+          this.y
+        );
+        
+        canvas1.onmousemove = (e) => {
+          let x = e.offsetX;
+          let y = e.offsetY;
+          
+          // 判断（x,y）是否在路径heartPath中
+          let isIn = ctx.isPointInPath(this.heartPath, x, y);
+          if (isIn) {
+            this.eventMapList.hover.forEach((item) => {
+              item();
+            });
+          } else {
+            this.eventMapList.leave.forEach((item) => {
+              item();
+            });
+          }
+        };
+      }
+      
+      onHover(fn) {
+        this.eventMapList.hover.push(fn);
+      }
+      onLeave(fn) {
+        this.eventMapList.leave.push(fn);
+      }
+      
+      draw() {
+        ctx.save();
+        ctx.fillStyle = this.color;
+        ctx.fill(this.heartPath);
+        
+        //判断鼠标是否在路径中
+        
+        ctx.restore();
+      }
+    }
+    
+    let heart = new Heart(200, 200);
+    heart.onHover(() => {
+      // 注意箭头函数中的this是向外找，但是这个是结构中上的定义在哪就在哪向外找，不说说在其执行的位置向外找。
+      // 比如这里的this就是Windows而不是heart实例对象
+      heart.color = "pink";
+    });
+    heart.onLeave(() => {
+      heart.color = "red";
+    });
+    
+    function render() {
+      ctx.clearRect(0, 0, canvas1.width, canvas1.height);
+      heart.draw();
+      // 一直渲染
+      requestAnimationFrame(render);
+    }
+    render();
+    </script>
+  </body>
+</html>
