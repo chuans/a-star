@@ -49,6 +49,7 @@ interface IGrid {
 }
 
 class AStartGame {
+    public canvas: HTMLCanvasElement;
     public ctx2d: CanvasRenderingContext2D;
     public gridMap: IGrid[][] = [];
     private readonly config: IConfig = {
@@ -67,6 +68,7 @@ class AStartGame {
         this.initData();
         this.initCanvas();
         this.initGridData();
+        this.onBindEvent();
         this.updateView();
     }
     
@@ -98,6 +100,7 @@ class AStartGame {
         canvas.width = this.config.w;
         
         this.ctx2d = canvas.getContext('2d');
+        this.canvas = canvas;
     }
     
     /**
@@ -133,8 +136,8 @@ class AStartGame {
         // 这里就固定设置起点和终点
         this.gridMap[ 0 ][ 0 ].type = EGridPointType.Start
         this.gridMap[ 0 ][ 0 ].color = 'red'
-        this.gridMap[ yPointSize-1 ][ xPointSize-1 ].type = EGridPointType.Start
-        this.gridMap[ yPointSize-1 ][ xPointSize-1 ].color = 'green'
+        this.gridMap[ yPointSize - 1 ][ xPointSize - 1 ].type = EGridPointType.Start
+        this.gridMap[ yPointSize - 1 ][ xPointSize - 1 ].color = 'green'
         
         // 简单设置下障碍点
         while (wallSize > 0) {
@@ -148,6 +151,24 @@ class AStartGame {
                 wallSize--;
             }
         }
+    }
+    
+    private onBindEvent() {
+        this.canvas.onmousedown = (e: MouseEvent) => {
+            const { offsetX: x, offsetY: y } = e;
+            
+            // 判断（x,y）是否在路径heartPath中
+            let isIn = this.ctx2d.isPointInPath(this.heartPath, x, y);
+            if (isIn) {
+                this.eventMapList.hover.forEach((item) => {
+                    item();
+                });
+            } else {
+                this.eventMapList.leave.forEach((item) => {
+                    item();
+                });
+            }
+        };
     }
     
     /**

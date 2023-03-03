@@ -59,6 +59,7 @@ var AStartGame = /** @class */ (function () {
         this.initData();
         this.initCanvas();
         this.initGridData();
+        this.onBindEvent();
         this.updateView();
     }
     /**
@@ -85,6 +86,7 @@ var AStartGame = /** @class */ (function () {
         canvas.height = this.config.h;
         canvas.width = this.config.w;
         this.ctx2d = canvas.getContext('2d');
+        this.canvas = canvas;
     };
     /**
      * 初始化核心数据
@@ -130,6 +132,24 @@ var AStartGame = /** @class */ (function () {
                 wallSize--;
             }
         }
+    };
+    AStartGame.prototype.onBindEvent = function () {
+        var _this = this;
+        this.canvas.onmousedown = function (e) {
+            var x = e.offsetX, y = e.offsetY;
+            // 判断（x,y）是否在路径heartPath中
+            var isIn = _this.ctx2d.isPointInPath(_this.heartPath, x, y);
+            if (isIn) {
+                _this.eventMapList.hover.forEach(function (item) {
+                    item();
+                });
+            }
+            else {
+                _this.eventMapList.leave.forEach(function (item) {
+                    item();
+                });
+            }
+        };
     };
     /**
      * 画 x 和 y 轴的间隔线
