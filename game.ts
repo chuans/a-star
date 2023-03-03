@@ -23,7 +23,11 @@ enum EGridPointType {
     // 不可移动的点 障碍物
     Wall,
     // 走过的路径
-    Move
+    Move,
+    // 起点
+    Start,
+    // 终点
+    End
 }
 
 interface IGrid {
@@ -51,7 +55,7 @@ class AStartGame {
         h: 600,
         xPointSize: 30,
         yPointSize: 20,
-        wallSize: 10
+        wallSize: 100
     };
     private xInterval: number;
     private yInterval: number;
@@ -116,15 +120,20 @@ class AStartGame {
                     color: '#fff',
                     xPoint: j,
                     yPoint: i,
-                    xStartPx: i * this.xInterval,
-                    yStartPx: j * this.xInterval,
-                    xEndPx: (i + 1) * this.xInterval,
-                    yEndPx: (j + 1) * this.xInterval
+                    xStartPx: j * this.xInterval,
+                    yStartPx: i * this.yInterval,
+                    xEndPx: (j + 1) * this.xInterval,
+                    yEndPx: (i + 1) * this.yInterval
                 });
             }
             
             this.gridMap.push(arr);
         }
+        // 这里就固定设置起点和终点
+        this.gridMap[ 0 ][ 0 ].type = EGridPointType.Start
+        this.gridMap[ 0 ][ 0 ].color = 'red'
+        this.gridMap[ yPointSize-1 ][ xPointSize-1 ].type = EGridPointType.Start
+        this.gridMap[ yPointSize-1 ][ xPointSize-1 ].color = 'green'
         
         // 简单设置下障碍点
         while (wallSize > 0) {

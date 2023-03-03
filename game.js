@@ -24,6 +24,10 @@ var EGridPointType;
     EGridPointType[EGridPointType["Wall"] = 2] = "Wall";
     // 走过的路径
     EGridPointType[EGridPointType["Move"] = 3] = "Move";
+    // 起点
+    EGridPointType[EGridPointType["Start"] = 4] = "Start";
+    // 终点
+    EGridPointType[EGridPointType["End"] = 5] = "End";
 })(EGridPointType || (EGridPointType = {}));
 var AStartGame = /** @class */ (function () {
     function AStartGame(selector, config) {
@@ -36,7 +40,7 @@ var AStartGame = /** @class */ (function () {
             h: 600,
             xPointSize: 30,
             yPointSize: 20,
-            wallSize: 10
+            wallSize: 100
         };
         /**
          * 全局更新视图，根据帧率自动刷新
@@ -102,14 +106,19 @@ var AStartGame = /** @class */ (function () {
                     color: '#fff',
                     xPoint: j,
                     yPoint: i,
-                    xStartPx: i * this.xInterval,
-                    yStartPx: j * this.xInterval,
-                    xEndPx: (i + 1) * this.xInterval,
-                    yEndPx: (j + 1) * this.xInterval
+                    xStartPx: j * this.xInterval,
+                    yStartPx: i * this.yInterval,
+                    xEndPx: (j + 1) * this.xInterval,
+                    yEndPx: (i + 1) * this.yInterval
                 });
             }
             this.gridMap.push(arr);
         }
+        // 这里就固定设置起点和终点
+        this.gridMap[0][0].type = EGridPointType.Start;
+        this.gridMap[0][0].color = 'red';
+        this.gridMap[yPointSize - 1][xPointSize - 1].type = EGridPointType.Start;
+        this.gridMap[yPointSize - 1][xPointSize - 1].color = 'green';
         // 简单设置下障碍点
         while (wallSize > 0) {
             var x = this.getRandom(0, xPointSize);
