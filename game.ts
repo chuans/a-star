@@ -32,6 +32,7 @@ enum EGridPointType {
 
 interface IGrid {
     type: EGridPointType;
+    // 格子当前颜色
     color: string;
     // x 点数坐标
     xPoint: number;
