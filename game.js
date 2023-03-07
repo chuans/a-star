@@ -29,6 +29,10 @@ var EGridPointType;
     // 终点
     EGridPointType[EGridPointType["End"] = 5] = "End";
 })(EGridPointType || (EGridPointType = {}));
+var WALL_COLOR = '#000';
+var MOVE_PATH_COLOR = '#3aff33';
+var START_POINT_COLOR = 'red';
+var END_POINT_COLOR = 'green';
 var AStartGame = /** @class */ (function () {
     function AStartGame(selector, config) {
         if (config === void 0) { config = {}; }
@@ -40,7 +44,11 @@ var AStartGame = /** @class */ (function () {
             h: 600,
             xPointSize: 30,
             yPointSize: 20,
-            wallSize: 100
+            wallSize: 100,
+            on: {
+                click: function () {
+                }
+            }
         };
         /**
          * 全局更新视图，根据帧率自动刷新
@@ -62,6 +70,36 @@ var AStartGame = /** @class */ (function () {
         this.onBindEvent();
         this.updateView();
     }
+    /**
+     * 实时修改当前格子为 墙壁，或者设置为普通路径
+     * @param item
+     */
+    AStartGame.prototype.onUpdateWallGrid = function (item) {
+        var xPoint = item.xPoint, yPoint = item.yPoint;
+        var grid = this.gridMap[yPoint][xPoint];
+        var isWall = grid.type === EGridPointType.Wall;
+        if (isWall) {
+            this.gridMap[yPoint][xPoint].type = EGridPointType.Normal;
+            this.gridMap[yPoint][xPoint].color = '#fff';
+        }
+        else {
+            this.gridMap[yPoint][xPoint].type = EGridPointType.Wall;
+            this.gridMap[yPoint][xPoint].color = WALL_COLOR;
+        }
+        console.log(isWall, grid);
+    };
+    /**
+     * 重置当前所有点，并重新随机生成
+     */
+    AStartGame.prototype.onReset = function () {
+        this.initGridData();
+        this.updateView();
+    };
+    /**
+     * 开始计算路径，并显示可移动路径
+     */
+    AStartGame.prototype.onPlayMove = function () {
+    };
     /**
      * 初始化一些相当于固定的数据
      * @private
@@ -100,27 +138,29 @@ var AStartGame = /** @class */ (function () {
     AStartGame.prototype.initGridData = function () {
         var _a = this.config, xPointSize = _a.xPointSize, yPointSize = _a.yPointSize;
         var wallSize = this.config.wallSize;
+        this.gridMap = [];
         for (var i = 0; i < yPointSize; i++) {
             var arr = [];
             for (var j = 0; j < xPointSize; j++) {
-                arr.push({
+                var item = {
                     type: EGridPointType.Normal,
                     color: '#fff',
                     xPoint: j,
                     yPoint: i,
                     xStartPx: j * this.xInterval,
                     yStartPx: i * this.yInterval,
-                    xEndPx: (j + 1) * this.xInterval,
-                    yEndPx: (i + 1) * this.yInterval
-                });
+                    path2D: new Path2D()
+                };
+                item.path2D.rect(item.xStartPx, item.yStartPx, this.xInterval, this.yInterval);
+                arr.push(item);
             }
             this.gridMap.push(arr);
         }
         // 这里就固定设置起点和终点
         this.gridMap[0][0].type = EGridPointType.Start;
-        this.gridMap[0][0].color = 'red';
+        this.gridMap[0][0].color = START_POINT_COLOR;
         this.gridMap[yPointSize - 1][xPointSize - 1].type = EGridPointType.Start;
-        this.gridMap[yPointSize - 1][xPointSize - 1].color = 'green';
+        this.gridMap[yPointSize - 1][xPointSize - 1].color = END_POINT_COLOR;
         // 简单设置下障碍点
         while (wallSize > 0) {
             var x = this.getRandom(0, xPointSize);
@@ -128,26 +168,22 @@ var AStartGame = /** @class */ (function () {
             var grid = this.gridMap[y][x];
             if (grid.type === EGridPointType.Normal) {
                 grid.type = EGridPointType.Wall;
-                grid.color = '#000';
+                grid.color = WALL_COLOR;
                 wallSize--;
             }
         }
     };
     AStartGame.prototype.onBindEvent = function () {
         var _this = this;
-        this.canvas.onmousedown = function (e) {
+        this.canvas.onclick = function (e) {
             var x = e.offsetX, y = e.offsetY;
-            // 判断（x,y）是否在路径heartPath中
-            var isIn = _this.ctx2d.isPointInPath(_this.heartPath, x, y);
-            if (isIn) {
-                _this.eventMapList.hover.forEach(function (item) {
-                    item();
-                });
-            }
-            else {
-                _this.eventMapList.leave.forEach(function (item) {
-                    item();
-                });
+            for (var i = 0; i < _this.gridMap.length; i++) {
+                for (var j = 0; j < _this.gridMap[i].length; j++) {
+                    var item = _this.gridMap[i][j];
+                    if (_this.ctx2d.isPointInPath(item.path2D, x, y)) {
+                        _this.config.on.click(__assign({}, item));
+                    }
+                }
             }
         };
     };
@@ -183,9 +219,9 @@ var AStartGame = /** @class */ (function () {
         for (var i = 0; i < this.gridMap.length; i++) {
             var row = this.gridMap[i];
             for (var j = 0; j < row.length; j++) {
-                var _a = row[j], color = _a.color, xStartPx = _a.xStartPx, xEndPx = _a.xEndPx, yStartPx = _a.yStartPx, yEndPx = _a.yEndPx;
+                var _a = row[j], color = _a.color, xStartPx = _a.xStartPx, yStartPx = _a.yStartPx;
                 ctx.fillStyle = color;
-                ctx.fillRect(xStartPx, yStartPx, xEndPx, yEndPx);
+                ctx.fillRect(xStartPx, yStartPx, this.xInterval, this.yInterval);
             }
         }
     };

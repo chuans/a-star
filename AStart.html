@@ -8,6 +8,7 @@
             background: #fff;
         }
         #canvas {
+            cursor: pointer;
             background: #fff;
             border: 1px solid #d6d6d6;
             position: absolute;
@@ -17,13 +18,49 @@
             border-radius: 8px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
         }
+        .buttons{
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .reset{
+            padding: 10px 20px;
+            background: #c85b5b;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+        }
+        .play{
+            padding: 10px 20px;
+            background: #39a91a;
+            color: #fff;
+            margin-top: 20px;
+            cursor: pointer;
+        }
     </style>
   </head>
   <body>
     <canvas id="canvas">不支持 canvas 哦</canvas>
+    <div class="buttons">
+      <div class="reset">全部重置</div>
+      <div class="play">计算路径并显示</div>
+    </div>
     <script src="game.js"></script>
     <script>
-    window.game = new AStartGame('#canvas')
+    window.game = new AStartGame('#canvas', {
+      on: {
+        click: (item) => {
+          game.onUpdateWallGrid(item)
+        }
+      }
+    })
+    document.querySelector('.reset').onclick = () => {
+      game.onReset()
+    }
+
+    document.querySelector('.play').onclick = () => {
+      game.onPlayMove()
+    }
     </script>
   </body>
 </html>
