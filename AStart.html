@@ -29,13 +29,16 @@
             width: 200px;
         }
         .reset {
-            background: #c85b5b;
+            background: #d64040;
         }
         .set-size {
             background: #c30bed;
         }
         .play {
             background: #39a91a;
+        }
+        .position {
+            background: #ea6d00;
         }
         .reset-start-point {
             background: #1a62a9;
@@ -60,6 +63,7 @@
       <div class="btn reset">全部重置</div>
       <div class="btn play">计算路径并显示</div>
       <div class="btn reset-start-point">设置开始与结束点，点两下</div>
+      <div class="btn position">显示/隐藏 坐标</div>
     </div>
     <div class="center size">
       <label>
@@ -84,17 +88,27 @@
     <script>
     window.game = new AStartGame('#canvas', {
       on: {
-        click: (item,key) => {
-          game.onUpdateGridType(item,key)
+        click: (item, key) => {
+          game.onUpdateGridType(item, key)
         }
       }
     })
     document.querySelector('.reset').onclick = () => {
       game.onReset()
     }
+    let show = false
+    document.querySelector('.position').onclick = () => {
+      game.onUpdateConfig({
+        showPosition: !show
+      })
+    }
     
     document.querySelector('.play').onclick = () => {
-      game.onPlayMove()
+      game.onPlayMove((ok, time) => {
+        if (ok) {
+          document.querySelector('.times').innerHTML = `路程计算耗时(ms): 「${time}」 ms`
+        }
+      })
     }
     
     document.querySelector('.reset-start-point').onclick = () => {

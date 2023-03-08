@@ -32,10 +32,10 @@ interface IPathNode extends IGrid {
 
 
 class Path {
-    private nodeMap: Map<string, IPathNode>;
+    private nodeMap: Map<string, IPathNode> = new Map();
     
-    private openList: Map<string, IPathNode>;
-    private closeList: Map<string, IPathNode>;
+    private openList: Map<string, IPathNode> = new Map();
+    private closeList: Map<string, IPathNode> = new Map();
     
     /**
      * 水平方向和斜边的数值，通过勾股定理可以计算
@@ -49,26 +49,54 @@ class Path {
     private startPoint: IPathNode;
     private endPoint: IPathNode;
     
+    private baseBodeValue = {
+        F: 0,
+        G: 0,
+        H: 0,
+        cost: 0,
+        key: '',
+        parent: null
+    }
+    
     /**
      * 开始搜索路径
      */
-    public startSearchPath(start: IGrid, end: IGrid, nodeMap: Map<string, IGrid>) {
-        this.updateGridMapInfo(nodeMap);
-        const lastNode = this.calc(this.startPoint);
-    
-        console.log(lastNode);
+    public async startSearchPath(start: IGrid, end: IGrid, nodeMap: Map<string, IGrid>): Promise<any> {
+        return new Promise(resolve => {
+            this.startPoint = {
+                ...start,
+                ...this.baseBodeValue,
+                key: `${ start.xPoint }-${ start.yPoint }`
+            };
+            this.endPoint = {
+                ...end,
+                ...this.baseBodeValue,
+                key: `${ end.xPoint }-${ end.yPoint }`
+            };
+            this.updateGridMapInfo(nodeMap);
+            const startT = Date.now()
+            const lastNode = this.calc(this.startPoint);
+            const endT = Date.now()
+            if (!lastNode) {
+                return resolve({
+                    ok: false
+                })
+            }
+            
+            return resolve({
+                ok: true,
+                paths: Path.getFinalPathByNode(lastNode),
+                time: endT - startT
+            })
+        })
     }
     
     private updateGridMapInfo(gridMap: Map<string, IGrid>) {
         gridMap.forEach((node, key) => {
             this.nodeMap.set(key, {
                 ...node,
-                F: 0,
-                G: 0,
-                H: 0,
-                cost: 0,
-                key,
-                parent: null
+                ...this.baseBodeValue,
+                key
             });
         });
     }
@@ -89,11 +117,11 @@ class Path {
         }
         
         // 2：查找 A 点周围的格子并设置开始为开始节点为他们的父节点
-        const aroundNode: IPathNode[] = this.getAroundNodesByNode(this.startPoint);
+        const aroundNode: IPathNode[] = this.getAroundNodesByNode(currentNode);
         
         // 3：把 A 节点加入关闭列表，并在打开列表中删除
         this.openList.delete(currentNode.key);
-        this.closeList.set(currentNode.key, this.startPoint);
+        this.closeList.set(currentNode.key, currentNode);
         
         // 4 计算节点的各项值 F G H，以及其他处理
         for (let i = 0; i < aroundNode.length; i++) {
@@ -106,7 +134,7 @@ class Path {
             }
             
             // 设置他们的父节点
-            node.parent = this.startPoint;
+            node.parent = currentNode;
             
             // 在这里优先判断一下是否找到了终点，如果有终点 则直接返回终点的 node
             if (node.type === EGridPointType.End) {
@@ -127,8 +155,7 @@ class Path {
                 lowestInfo[ 1 ] = node.F;
             }
         }
-        
-        this.calc(this.openList.get(lowestInfo[ 0 ] as string));
+        return this.calc(this.openList.get(lowestInfo[ 0 ] as string));
     }
     
     /**
@@ -168,11 +195,26 @@ class Path {
             const dir = dirPosList[ i ];
             const _node = this.nodeMap.get(`${ node.xPoint + dir[ 0 ] }-${ node.yPoint + dir[ 1 ] }`);
             
-            if (_node && _node.type === EGridPointType.Normal) {
+            if (_node && _node.type !== EGridPointType.Wall) {
                 result.push(_node);
             }
         }
         
         return result;
+    }
+    
+    private static getFinalPathByNode(lastNode: IPathNode): IPathNode[] {
+        const pathNodes: IPathNode[] = [];
+        let cur = lastNode
+        while (lastNode.parent) {
+            pathNodes.push(cur)
+            
+            cur = lastNode.parent;
+        }
+        
+        pathNodes.shift()
+        pathNodes.reverse()
+        
+        return pathNodes;
     }
 }

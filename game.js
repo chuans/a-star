@@ -5,6 +5,15 @@
  * Time: 17:51
  * Desc:
  */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var EGridPointType;
 (function (EGridPointType) {
     // 默认可移动的点
@@ -29,9 +38,14 @@ class AStartGame {
         this.config = {
             w: 800,
             h: 600,
-            xPointSize: 30,
-            yPointSize: 20,
-            wallSize: 100,
+            // xPointSize: 30,
+            // yPointSize: 20,
+            // wallSize: 100,
+            // showPosition: false,
+            xPointSize: 5,
+            yPointSize: 5,
+            wallSize: 5,
+            showPosition: true,
             on: {
                 click: () => {
                 }
@@ -129,8 +143,17 @@ class AStartGame {
     /**
      * 开始计算路径，并显示可移动路径
      */
-    onPlayMove() {
-        this.path.startSearchPath();
+    onPlayMove(cb) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.path.startSearchPath(this.startPoint, this.endPoint, this.gridMap);
+            if (result.ok) {
+                cb(result.ok, result.time);
+                this.startRenderMovePath(result.paths);
+            }
+            else {
+                cb(false);
+            }
+        });
     }
     /**
      * 初始化一些相当于固定的数据
@@ -191,7 +214,7 @@ class AStartGame {
         // 这里就固定设置起点和终点
         start.type = EGridPointType.Start;
         start.color = START_POINT_COLOR;
-        end.type = EGridPointType.Start;
+        end.type = EGridPointType.End;
         end.color = END_POINT_COLOR;
         this.startPoint = start;
         this.endPoint = end;
@@ -216,6 +239,21 @@ class AStartGame {
                 }
             });
         };
+    }
+    /**
+     * 开始路径动画
+     * @private
+     */
+    startRenderMovePath(paths) {
+        let i = 0;
+        const timer = setInterval(() => {
+            if (!paths[i]) {
+                clearInterval(timer);
+                return;
+            }
+            this.gridMap.get(paths[i].key).type = EGridPointType.Move;
+            i++;
+        }, 500);
     }
     /**
      * 画 x 和 y 轴的间隔线
@@ -250,6 +288,18 @@ class AStartGame {
             const { color, xStartPx, yStartPx } = grid;
             ctx.fillStyle = color;
             ctx.fillRect(xStartPx, yStartPx, this.xInterval, this.yInterval);
+        });
+        if (!this.config.showPosition)
+            return;
+        this.gridMap.forEach((grid) => {
+            const { type, xStartPx, xPoint, yPoint, yStartPx } = grid;
+            if (type !== EGridPointType.Normal) {
+                ctx.fillStyle = '#fff';
+            }
+            else {
+                ctx.fillStyle = '#000';
+            }
+            ctx.fillText(`${xPoint}-${yPoint}`, xStartPx + 2, yStartPx + 15);
         });
     }
     /**
