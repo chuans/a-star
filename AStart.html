@@ -11,55 +11,106 @@
             cursor: pointer;
             background: #fff;
             border: 1px solid #d6d6d6;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
             border-radius: 8px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            margin: 100px auto 50px;
+            display: block;
         }
-        .buttons{
-            position: fixed;
-            top: 0;
-            left: 0;
+        .center {
+            display: flex;
+            justify-content: center;
         }
-        .reset{
+        .btn {
             padding: 10px 20px;
-            background: #c85b5b;
             color: #fff;
             text-align: center;
             cursor: pointer;
+            margin: 0 10px;
+            width: 200px;
         }
-        .play{
-            padding: 10px 20px;
+        .reset {
+            background: #c85b5b;
+        }
+        .set-size {
+            background: #c30bed;
+        }
+        .play {
             background: #39a91a;
-            color: #fff;
-            margin-top: 20px;
-            cursor: pointer;
+        }
+        .reset-start-point {
+            background: #1a62a9;
+        }
+        .size label {
+            margin: 20px;
+        }
+        .times {
+            position: fixed;
+            top: 20px;
+            font-size: 18px;
+            color: #c85b5b;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
         }
     </style>
   </head>
   <body>
     <canvas id="canvas">不支持 canvas 哦</canvas>
-    <div class="buttons">
-      <div class="reset">全部重置</div>
-      <div class="play">计算路径并显示</div>
+    <div class="center operation">
+      <div class="btn reset">全部重置</div>
+      <div class="btn play">计算路径并显示</div>
+      <div class="btn reset-start-point">设置开始与结束点，点两下</div>
     </div>
+    <div class="center size">
+      <label>
+        X 轴上的数量
+        <input type="text" id="xSize" />
+      </label>
+      <label>
+        Y 轴上的数量
+        <input type="text" id="ySize" />
+      </label>
+      <label>
+        障碍点数量
+        <input type="text" id="wallSize" />
+      </label>
+    </div>
+    <div class="center">
+      <div class="btn set-size">设置横纵轴点的数量</div>
+    </div>
+    <div class="times">路程计算耗时(ms): 「请点击计算路径」</div>
+    <script src="path.js"></script>
     <script src="game.js"></script>
     <script>
     window.game = new AStartGame('#canvas', {
       on: {
-        click: (item) => {
-          game.onUpdateWallGrid(item)
+        click: (item,key) => {
+          game.onUpdateGridType(item,key)
         }
       }
     })
     document.querySelector('.reset').onclick = () => {
       game.onReset()
     }
-
+    
     document.querySelector('.play').onclick = () => {
       game.onPlayMove()
+    }
+    
+    document.querySelector('.reset-start-point').onclick = () => {
+      game.onSetStartAndEndPoint()
+    }
+    document.querySelector('.set-size').onclick = () => {
+      const x = document.querySelector('#xSize').value
+      const y = document.querySelector('#ySize').value
+      const wallSize = document.querySelector('#wallSize').value
+      
+      console.log(x)
+      game.onUpdateConfig({
+        xPointSize: Number(x) || 30,
+        yPointSize: Number(y) || 20,
+        wallSize: Number(wallSize) || 100
+      })
     }
     </script>
   </body>

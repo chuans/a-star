@@ -7,7 +7,7 @@
  */
 
 interface ICallbackFn {
-    click: (item: IGrid) => void
+    click: (item: IGrid, key: string) => void;
 }
 
 interface IConfig {
@@ -51,16 +51,16 @@ interface IGrid {
     path2D: Path2D;
 }
 
-const WALL_COLOR = '#000'
-const MOVE_PATH_COLOR = '#3aff33'
-const START_POINT_COLOR = 'red'
-const END_POINT_COLOR = 'green'
+const WALL_COLOR = '#000';
+const MOVE_PATH_COLOR = '#3aff33';
+const START_POINT_COLOR = 'red';
+const END_POINT_COLOR = 'green';
 
 class AStartGame {
     public canvas: HTMLCanvasElement;
     public ctx2d: CanvasRenderingContext2D;
-    public gridMap: IGrid[][] = [];
-    private readonly config: IConfig = {
+    public gridMap: Map<string, IGrid> = new Map();
+    private config: IConfig = {
         w: 800,
         h: 600,
         xPointSize: 30,
@@ -71,11 +71,21 @@ class AStartGame {
             }
         }
     };
+    private path: Path = null;
     private xInterval: number;
     private yInterval: number;
     
+    // 设置开始结束的状态
+    private isSetStart: boolean = false;
+    // 设置一个索引，true为开始 false为结束
+    private setPointType: boolean = true;
+    
+    private startPoint: IGrid = null;
+    private endPoint: IGrid = null;
+    
     constructor(private selector: string, config: IConfig = {}) {
         this.config = { ...this.config, ...config };
+        this.path = new Path();
         
         this.initData();
         this.initCanvas();
@@ -87,19 +97,35 @@ class AStartGame {
     /**
      * 实时修改当前格子为 墙壁，或者设置为普通路径
      * @param item
+     * @param key
      */
-    public onUpdateWallGrid(item: IGrid) {
-        const { xPoint, yPoint } = item
-        const grid = this.gridMap[ yPoint ][ xPoint ]
-        const isWall = grid.type === EGridPointType.Wall
-        if (isWall) {
-            this.gridMap[ yPoint ][ xPoint ].type = EGridPointType.Normal;
-            this.gridMap[ yPoint ][ xPoint ].color = '#fff';
-        } else {
-            this.gridMap[ yPoint ][ xPoint ].type = EGridPointType.Wall;
-            this.gridMap[ yPoint ][ xPoint ].color = WALL_COLOR;
+    public onUpdateGridType(item: IGrid, key: string) {
+        const grid = this.gridMap.get(key);
+        if (this.isSetStart) {
+            if (this.setPointType) {
+                grid.type = EGridPointType.Start;
+                grid.color = START_POINT_COLOR;
+                this.startPoint = grid;
+            } else {
+                grid.type = EGridPointType.End;
+                grid.color = END_POINT_COLOR;
+                this.endPoint = grid;
+            }
+            
+            this.setPointType = !this.setPointType;
+            if (this.setPointType) this.isSetStart = false;
+            return;
         }
-        console.log(isWall,grid)
+        
+        const isWall = grid.type === EGridPointType.Wall;
+        if (isWall) {
+            grid.type = EGridPointType.Normal;
+            grid.color = '#fff';
+        } else {
+            grid.type = EGridPointType.Wall;
+            grid.color = WALL_COLOR;
+        }
+        
     }
     
     /**
@@ -111,10 +137,34 @@ class AStartGame {
     }
     
     /**
+     * 手动设置开始和结束点
+     */
+    public onSetStartAndEndPoint() {
+        this.isSetStart = true;
+        this.gridMap.forEach((grid: IGrid) => {
+            if (grid.type === EGridPointType.Start || grid.type === EGridPointType.End) {
+                grid.type = EGridPointType.Normal;
+                grid.color = '#fff';
+            }
+        });
+    }
+    
+    /**
+     * 设置更新基础配置
+     */
+    public onUpdateConfig(config: IConfig) {
+        this.config = { ...this.config, ...config };
+        
+        this.initData();
+        this.initCanvas();
+        this.initGridData();
+    }
+    
+    /**
      * 开始计算路径，并显示可移动路径
      */
     public onPlayMove() {
-    
+        this.path.startSearchPath();
     }
     
     /**
@@ -160,10 +210,9 @@ class AStartGame {
     private initGridData() {
         const { xPointSize, yPointSize } = this.config;
         let wallSize = this.config.wallSize;
-        this.gridMap = []
+        this.gridMap.clear();
         
         for (let i = 0; i < yPointSize; i++) {
-            const arr: IGrid[] = [];
             for (let j = 0; j < xPointSize; j++) {
                 const item: IGrid = {
                     type: EGridPointType.Normal,
@@ -173,24 +222,26 @@ class AStartGame {
                     xStartPx: j * this.xInterval,
                     yStartPx: i * this.yInterval,
                     path2D: new Path2D()
-                }
-                item.path2D.rect(item.xStartPx, item.yStartPx, this.xInterval, this.yInterval)
-                arr.push(item);
+                };
+                item.path2D.rect(item.xStartPx, item.yStartPx, this.xInterval, this.yInterval);
+                this.gridMap.set(`${ j }-${ i }`, item);
             }
-            
-            this.gridMap.push(arr);
         }
+        const start = this.getMapKeyByPos(0, 0);
+        const end = this.getMapKeyByPos(xPointSize - 1, yPointSize - 1);
         // 这里就固定设置起点和终点
-        this.gridMap[ 0 ][ 0 ].type = EGridPointType.Start
-        this.gridMap[ 0 ][ 0 ].color = START_POINT_COLOR
-        this.gridMap[ yPointSize - 1 ][ xPointSize - 1 ].type = EGridPointType.Start
-        this.gridMap[ yPointSize - 1 ][ xPointSize - 1 ].color = END_POINT_COLOR
+        start.type = EGridPointType.Start;
+        start.color = START_POINT_COLOR;
+        end.type = EGridPointType.Start;
+        end.color = END_POINT_COLOR;
+        this.startPoint = start;
+        this.endPoint = end;
         
         // 简单设置下障碍点
         while (wallSize > 0) {
             const x = this.getRandom(0, xPointSize);
             const y = this.getRandom(0, yPointSize);
-            const grid: IGrid = this.gridMap[ y ][ x ];
+            const grid: IGrid = this.getMapKeyByPos(x, y);
             
             if (grid.type === EGridPointType.Normal) {
                 grid.type = EGridPointType.Wall;
@@ -204,15 +255,11 @@ class AStartGame {
         this.canvas.onclick = (e: MouseEvent) => {
             const { offsetX: x, offsetY: y } = e;
             
-            
-            for (let i = 0; i < this.gridMap.length; i++) {
-                for (let j = 0; j < this.gridMap[ i ].length; j++) {
-                    const item: IGrid = this.gridMap[ i ][ j ]
-                    if (this.ctx2d.isPointInPath(item.path2D, x, y)) {
-                        this.config.on.click({ ...item })
-                    }
+            this.gridMap.forEach((grid: IGrid, key) => {
+                if (this.ctx2d.isPointInPath(grid.path2D, x, y)) {
+                    this.config.on.click({ ...grid }, key);
                 }
-            }
+            });
         };
     }
     
@@ -251,15 +298,11 @@ class AStartGame {
     private drawGrid() {
         const ctx: CanvasRenderingContext2D = this.ctx2d;
         
-        for (let i = 0; i < this.gridMap.length; i++) {
-            const row = this.gridMap[ i ];
-            
-            for (let j = 0; j < row.length; j++) {
-                const { color, xStartPx, yStartPx } = row[ j ];
-                ctx.fillStyle = color;
-                ctx.fillRect(xStartPx, yStartPx, this.xInterval, this.yInterval);
-            }
-        }
+        this.gridMap.forEach((grid, key) => {
+            const { color, xStartPx, yStartPx } = grid;
+            ctx.fillStyle = color;
+            ctx.fillRect(xStartPx, yStartPx, this.xInterval, this.yInterval);
+        });
     }
     
     /**
@@ -273,7 +316,16 @@ class AStartGame {
         requestAnimationFrame(this.updateView);
     };
     
+    
     private getRandom: (min: number, max: number) => number = (min, max) => {
         return Math.floor(Math.random() * max) + min;
     };
+    
+    /**
+     * 通过坐标获取节点
+     * @private
+     */
+    private getMapKeyByPos(a: number | string, b: number | string) {
+        return this.gridMap.get(`${ a }-${ b }`);
+    }
 }
