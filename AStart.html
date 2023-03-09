@@ -31,6 +31,9 @@
         .reset {
             background: #d64040;
         }
+        .quick {
+            background: #d1a514;
+        }
         .set-size {
             background: #c30bed;
         }
@@ -64,6 +67,7 @@
       <div class="btn play">计算路径并显示</div>
       <div class="btn reset-start-point">设置开始与结束点，点两下</div>
       <div class="btn position">显示/隐藏 坐标</div>
+      <div class="btn quick">快速通过带墙的斜边</div>
     </div>
     <div class="center size">
       <label>
@@ -98,8 +102,9 @@
     }
     let show = false
     document.querySelector('.position').onclick = () => {
+      show = !show
       game.onUpdateConfig({
-        showPosition: !show
+        showPosition: show
       })
     }
     
@@ -107,6 +112,8 @@
       game.onPlayMove((ok, time) => {
         if (ok) {
           document.querySelector('.times').innerHTML = `路程计算耗时(ms): 「${time}」 ms`
+        } else {
+          alert('这是死路哦')
         }
       })
     }
@@ -114,12 +121,17 @@
     document.querySelector('.reset-start-point').onclick = () => {
       game.onSetStartAndEndPoint()
     }
+    let isQuick = true
+    document.querySelector('.quick').onclick = () => {
+      isQuick = !isQuick
+      game.onSetQuickPass(isQuick)
+    }
+    
     document.querySelector('.set-size').onclick = () => {
       const x = document.querySelector('#xSize').value
       const y = document.querySelector('#ySize').value
       const wallSize = document.querySelector('#wallSize').value
       
-      console.log(x)
       game.onUpdateConfig({
         xPointSize: Number(x) || 30,
         yPointSize: Number(y) || 20,

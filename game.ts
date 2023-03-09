@@ -20,6 +20,8 @@ interface IConfig {
     // 障碍物的数量，根据数量随机生成
     wallSize?: number;
     showPosition?: boolean;
+    // 当旁边有墙壁的时候能不能走斜边
+    isQuickPass?: boolean;
     on?: ICallbackFn;
 }
 
@@ -64,14 +66,11 @@ class AStartGame {
     private config: IConfig = {
         w: 800,
         h: 600,
-        // xPointSize: 30,
-        // yPointSize: 20,
-        // wallSize: 100,
-        // showPosition: false,
-        xPointSize: 5,
-        yPointSize: 5,
-        wallSize: 5,
-        showPosition: true,
+        xPointSize: 30,
+        yPointSize: 20,
+        wallSize: 100,
+        showPosition: false,
+        isQuickPass: true,
         on: {
             click: () => {
             }
@@ -138,8 +137,9 @@ class AStartGame {
      * 重置当前所有点，并重新随机生成
      */
     public onReset() {
+        this.initData();
+        this.initCanvas();
         this.initGridData();
-        this.updateView();
     }
     
     /**
@@ -166,17 +166,21 @@ class AStartGame {
         this.initGridData();
     }
     
+    public onSetQuickPass(isQuick: boolean) {
+        this.config.isQuickPass = isQuick;
+    }
+    
     /**
      * 开始计算路径，并显示可移动路径
      */
     public async onPlayMove(cb) {
-        const result = await this.path.startSearchPath(this.startPoint, this.endPoint, this.gridMap);
+        const result = await this.path.startSearchPath(this.startPoint, this.endPoint, this.gridMap, this.config.isQuickPass);
         if (result.ok) {
-            cb(result.ok, result.time)
-            
-            this.startRenderMovePath(result.paths)
+            cb(result.ok, result.time);
+            console.log(result);
+            this.startRenderMovePath(result.paths);
         } else {
-            cb(false)
+            cb(false);
         }
     }
     
@@ -281,15 +285,18 @@ class AStartGame {
      * @private
      */
     private startRenderMovePath(paths: IPathNode[]) {
-        let i = 0
+        let i = 0;
         const timer = setInterval(() => {
             if (!paths[ i ]) {
-                clearInterval(timer)
-                return
+                clearInterval(timer);
+                return;
             }
-            this.gridMap.get(paths[ i ].key).type = EGridPointType.Move;
-            i++
-        }, 500)
+            const gd = this.gridMap.get(paths[ i ].key);
+            gd.type = EGridPointType.Move;
+            gd.color = MOVE_PATH_COLOR;
+            
+            i++;
+        }, 100);
     }
     
     /**
@@ -333,7 +340,7 @@ class AStartGame {
             ctx.fillRect(xStartPx, yStartPx, this.xInterval, this.yInterval);
         });
         
-        if (!this.config.showPosition) return
+        if (!this.config.showPosition) return;
         
         this.gridMap.forEach((grid) => {
             const { type, xStartPx, xPoint, yPoint, yStartPx } = grid;

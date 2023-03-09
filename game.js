@@ -38,14 +38,11 @@ class AStartGame {
         this.config = {
             w: 800,
             h: 600,
-            // xPointSize: 30,
-            // yPointSize: 20,
-            // wallSize: 100,
-            // showPosition: false,
-            xPointSize: 5,
-            yPointSize: 5,
-            wallSize: 5,
-            showPosition: true,
+            xPointSize: 30,
+            yPointSize: 20,
+            wallSize: 100,
+            showPosition: false,
+            isQuickPass: true,
             on: {
                 click: () => {
                 }
@@ -116,8 +113,9 @@ class AStartGame {
      * 重置当前所有点，并重新随机生成
      */
     onReset() {
+        this.initData();
+        this.initCanvas();
         this.initGridData();
-        this.updateView();
     }
     /**
      * 手动设置开始和结束点
@@ -140,14 +138,18 @@ class AStartGame {
         this.initCanvas();
         this.initGridData();
     }
+    onSetQuickPass(isQuick) {
+        this.config.isQuickPass = isQuick;
+    }
     /**
      * 开始计算路径，并显示可移动路径
      */
     onPlayMove(cb) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.path.startSearchPath(this.startPoint, this.endPoint, this.gridMap);
+            const result = yield this.path.startSearchPath(this.startPoint, this.endPoint, this.gridMap, this.config.isQuickPass);
             if (result.ok) {
                 cb(result.ok, result.time);
+                console.log(result);
                 this.startRenderMovePath(result.paths);
             }
             else {
@@ -251,9 +253,11 @@ class AStartGame {
                 clearInterval(timer);
                 return;
             }
-            this.gridMap.get(paths[i].key).type = EGridPointType.Move;
+            const gd = this.gridMap.get(paths[i].key);
+            gd.type = EGridPointType.Move;
+            gd.color = MOVE_PATH_COLOR;
             i++;
-        }, 500);
+        }, 100);
     }
     /**
      * 画 x 和 y 轴的间隔线
