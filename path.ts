@@ -53,7 +53,7 @@ class Path {
     
     private isQuickPass: boolean;
     
-    private baseBodeValue = {
+    private baseNodeValue = {
         F: 0,
         G: 0,
         H: 0,
@@ -73,12 +73,12 @@ class Path {
         return new Promise(resolve => {
             this.startPoint = {
                 ...start,
-                ...this.baseBodeValue,
+                ...this.baseNodeValue,
                 key: `${ start.xPoint }-${ start.yPoint }`
             };
             this.endPoint = {
                 ...end,
-                ...this.baseBodeValue,
+                ...this.baseNodeValue,
                 key: `${ end.xPoint }-${ end.yPoint }`
             };
             this.updateGridMapInfo(nodeMap);
@@ -104,7 +104,7 @@ class Path {
         gridMap.forEach((node, key) => {
             this.nodeMap.set(key, {
                 ...node,
-                ...this.baseBodeValue,
+                ...this.baseNodeValue,
                 key
             });
         });
