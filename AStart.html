@@ -67,7 +67,7 @@
       <div class="btn play">计算路径并显示</div>
       <div class="btn reset-start-point">设置开始与结束点，点两下</div>
       <div class="btn position">显示/隐藏 坐标</div>
-      <div class="btn quick">快速通过带墙的斜边</div>
+      <div class="btn quick">快速通过带墙的斜边「是」</div>
     </div>
     <div class="center size">
       <label>
@@ -125,6 +125,7 @@
     document.querySelector('.quick').onclick = () => {
       isQuick = !isQuick
       game.onSetQuickPass(isQuick)
+      document.querySelector('.quick').innerHTML = `快速通过带墙的斜边「${isQuick ? '是':'否'}」`
     }
     
     document.querySelector('.set-size').onclick = () => {
