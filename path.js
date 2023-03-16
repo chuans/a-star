@@ -20,7 +20,7 @@ class Path {
          */
         this.HORIZONTAL_DIR = 10;
         this.OBLIQUE_DIR = 14;
-        this.baseBodeValue = {
+        this.baseNodeValue = {
             F: 0,
             G: 0,
             H: 0,
@@ -38,9 +38,9 @@ class Path {
             this.closeList.clear();
             this.nodeMap.clear();
             return new Promise(resolve => {
-                this.startPoint = Object.assign(Object.assign(Object.assign({}, start), this.baseBodeValue), { key: `${start.xPoint}-${start.yPoint}` });
-                this.endPoint = Object.assign(Object.assign(Object.assign({}, end), this.baseBodeValue), { key: `${end.xPoint}-${end.yPoint}` });
-                this.updateGridMapInfo(nodeMap);
+                this.startPoint = Object.assign(Object.assign(Object.assign({}, start), this.baseNodeValue), { key: `${start.xPoint}-${start.yPoint}` });
+                this.endPoint = Object.assign(Object.assign(Object.assign({}, end), this.baseNodeValue), { key: `${end.xPoint}-${end.yPoint}` });
+                this.updateNodeMapInfo(nodeMap);
                 const startT = Date.now();
                 const lastNode = this.calc(this.startPoint);
                 const endT = Date.now();
@@ -58,9 +58,9 @@ class Path {
             });
         });
     }
-    updateGridMapInfo(gridMap) {
+    updateNodeMapInfo(gridMap) {
         gridMap.forEach((node, key) => {
-            this.nodeMap.set(key, Object.assign(Object.assign(Object.assign({}, node), this.baseBodeValue), { key }));
+            this.nodeMap.set(key, Object.assign(Object.assign(Object.assign({}, node), this.baseNodeValue), { key }));
         });
     }
     /**

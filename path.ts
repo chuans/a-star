@@ -81,7 +81,7 @@ class Path {
                 ...this.baseNodeValue,
                 key: `${ end.xPoint }-${ end.yPoint }`
             };
-            this.updateGridMapInfo(nodeMap);
+            this.updateNodeMapInfo(nodeMap);
             const startT = Date.now();
             const lastNode = this.calc(this.startPoint);
             const endT = Date.now();
@@ -100,7 +100,7 @@ class Path {
         });
     }
     
-    private updateGridMapInfo(gridMap: Map<string, IGrid>) {
+    private updateNodeMapInfo(gridMap: Map<string, IGrid>) {
         gridMap.forEach((node, key) => {
             this.nodeMap.set(key, {
                 ...node,
